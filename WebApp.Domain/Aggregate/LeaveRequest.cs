@@ -13,14 +13,14 @@ namespace WebApp.Domain.Aggregate
         Rejected
     }
 
-    public class LeaveRequest : Entity   // ✅ inherit base entity
+    public class LeaveRequest : Entity 
     {
         public int Id { get; private set; }
         public int EmployeeId { get; private set; }
         public LeavePeriod? Period { get; private set; }
         public LeaveStatus Status { get; private set; }
 
-        protected LeaveRequest() { } // EF Core
+        protected LeaveRequest() { } 
 
         public LeaveRequest(int employeeId, LeavePeriod period)
         {

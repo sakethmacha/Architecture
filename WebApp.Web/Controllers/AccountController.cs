@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using WebApp.Web.ViewModels;
 using WebApp.Application.UseCases;
+using WebApp.Web.ViewModels;
 namespace WebApp.Web.Controllers
 {
     public class AccountController : Controller

@@ -4,7 +4,6 @@ namespace WebApp.Domain.ValueObjects
 {
     public record LeavePeriod
     {
-        public int Id {  get; set; }
         public DateTime From { get; private set; }
         public DateTime To { get; private set; }
 
@@ -12,6 +11,8 @@ namespace WebApp.Domain.ValueObjects
 
         public LeavePeriod(DateTime from, DateTime to)
         {
+            if (from > to)
+                throw new ArgumentException("From date must be before To date");
             From = from;
             To = to;
         }
