@@ -24,7 +24,6 @@ namespace WebApp.Web.Controllers
             RejectRequestLeaveUseCase = rejectRequestLeaveUseCase;
         }
 
-        // 1️⃣ Show Request Leave Form
         [HttpGet]
         [Authorize(Roles = "Employee")]
         public IActionResult Request()
@@ -32,7 +31,6 @@ namespace WebApp.Web.Controllers
             return View();
         }
 
-        // 2️⃣ Submit Leave Request
         [HttpPost]
         public IActionResult Request(RequestLeaveViewModel model)
         {
@@ -49,17 +47,14 @@ namespace WebApp.Web.Controllers
                 model.To
             );
 
-            // After request → go to confirmation page
             return RedirectToAction("RequestSuccess");
         }
 
-        // 3️⃣ Confirmation Page
         public IActionResult RequestSuccess()
         {
             return View();
         }
 
-        // 4️⃣ Approve Leave (Admin action)
         [HttpPost]
         public IActionResult Approve(int leaveRequestId)
         {
@@ -69,7 +64,6 @@ namespace WebApp.Web.Controllers
             TempData["Message"] = "Leave request approved successfully.";
             return RedirectToAction("ApproveSuccess");
         }
-
         [HttpGet]
         public IActionResult ApproveSuccess()
         {
@@ -103,7 +97,5 @@ namespace WebApp.Web.Controllers
             var requests = GetPendingRequestUseCase.Execute();
             return View(requests);
         }
-
     }
-
 }
