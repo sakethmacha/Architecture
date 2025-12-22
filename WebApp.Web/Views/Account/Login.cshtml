@@ -1,0 +1,41 @@
+﻿<div class="container d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow-lg p-4" style="width: 400px;">
+        <h3 class="text-center mb-4">
+            <i class="fa-solid fa-right-to-bracket text-success"></i> Login
+        </h3>
+
+        <form asp-action="Login" method="post">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="fa-solid fa-envelope"></i> Email
+                </label>
+                <input name="email" class="form-control" placeholder="Enter email" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    <i class="fa-solid fa-lock"></i> Password
+                </label>
+                <input name="password" type="password" class="form-control" placeholder="Enter password" />
+            </div>
+
+            <button type="submit" class="btn btn-success w-100">
+                <i class="fa-solid fa-right-to-bracket"></i> Login
+            </button>
+
+            <div class="text-center mt-3">
+                <a asp-action="Register">Create new account</a>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger mt-3">@ViewBag.Error</div>
+            }
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+}

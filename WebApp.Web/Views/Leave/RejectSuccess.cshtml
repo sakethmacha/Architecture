@@ -1,0 +1,29 @@
+﻿@{
+    ViewData["Title"] = "Leave Rejected";
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0 rounded-4 text-center">
+        <div class="card-body p-5">
+            <div class="mb-3">
+                <span class="display-1 text-danger">✖</span>
+            </div>
+
+            <h2 class="text-danger mb-3">Leave Rejected</h2>
+
+            <p class="text-muted mb-4">
+                The leave request has been rejected.
+            </p>
+
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-action="Pending" class="btn btn-primary">
+                    Back to Pending Requests
+                </a>
+
+                @* <a asp-action="History" class="btn btn-outline-secondary">
+                    View Leave History
+                </a> *@
+            </div>
+        </div>
+    </div>
+</div>

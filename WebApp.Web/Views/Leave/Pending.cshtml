@@ -1,0 +1,82 @@
+﻿@model IEnumerable<WebApp.Domain.Aggregate.LeaveRequest>
+
+@{
+    ViewData["Title"] = "Pending Leave Requests";
+}
+
+<div class="container mt-4">
+
+    <h2 class="mb-4">Pending Leave Requests</h2>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No pending leave requests found.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model)
+                    {
+                        <tr>
+                            <td>@req.EmployeeId</td>
+
+                            <td>
+                                @(req.Period != null
+                                                        ? req.Period.From.ToShortDateString()
+                                                        : "-")
+                                                          </td>
+
+                            <td>
+                                @(req.Period != null
+                                                        ? req.Period.To.ToShortDateString()
+                                                        : "-")
+                    </td>
+
+                            <td>
+                                <span class="badge bg-warning text-dark">
+                                    @req.Status
+                                </span>
+                            </td>
+
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-2">
+
+                                    <!-- Approve -->
+                                    <form asp-action="Approve" method="post">
+                                        <input type="hidden" name="leaveRequestId" value="@req.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            Approve
+                                        </button>
+                                    </form>
+
+                                    <!-- Reject -->
+                                    <form asp-action="Reject" method="post">
+                                        <input type="hidden" name="leaveRequestId" value="@req.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            Reject
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+</div>

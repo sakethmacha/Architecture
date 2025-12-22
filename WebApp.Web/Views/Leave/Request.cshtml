@@ -1,0 +1,63 @@
+﻿@model WebApp.Web.ViewModels.RequestLeaveViewModel
+
+@{
+    ViewData["Title"] = "Request Leave";
+}
+
+<div class="container d-flex justify-content-center align-items-center mt-5">
+    <div class="col-md-6">
+
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-primary text-white text-center rounded-top-4">
+                <h4 class="mb-0">Leave Request Form</h4>
+            </div>
+
+            <div class="card-body p-4">
+
+                <form asp-action="Request" method="post" novalidate>
+
+                    <!-- Name -->
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-semibold"></label>
+                        <input asp-for="Name" class="form-control" placeholder="Enter your full name" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email" class="form-control" placeholder="Enter your email address" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <!-- From Date -->
+                    <div class="mb-3">
+                        <label asp-for="From" class="form-label fw-semibold"></label>
+                        <input asp-for="From" type="date" class="form-control" />
+                        <span asp-validation-for="From" class="text-danger small"></span>
+                    </div>
+
+                    <!-- To Date -->
+                    <div class="mb-4">
+                        <label asp-for="To" class="form-label fw-semibold"></label>
+                        <input asp-for="To" type="date" class="form-control" />
+                        <span asp-validation-for="To" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                            Submit Leave Request
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
