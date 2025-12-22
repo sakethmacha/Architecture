@@ -104,12 +104,6 @@ namespace WebApp.Web.Controllers
             return View(requests);
         }
 
-        // 5️⃣ Approval Confirmation
-        public IActionResult ApprovalSuccess()
-        {
-            return View();
-        }
-
     }
 
 }
