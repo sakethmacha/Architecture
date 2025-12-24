@@ -12,9 +12,9 @@ namespace WebApp.Infrastructure.Repositories
             DbContext = dbContext;
         }
 
-        public Employee GetById(int id)
+        public User GetById(int id)
         {
-            var employee = DbContext.Employees
+            var employee = DbContext.Users
                 .SingleOrDefault(e => e.Id == id);
 
             if (employee == null)
@@ -22,9 +22,9 @@ namespace WebApp.Infrastructure.Repositories
 
             return employee;
         }
-        public Employee GetByEmail(string email)
+        public User GetByEmail(string email)
         {
-            var employee = DbContext.Employees
+            var employee = DbContext.Users
                 .SingleOrDefault(e => e.Email == email);
 
             if (employee == null)
@@ -32,9 +32,9 @@ namespace WebApp.Infrastructure.Repositories
 
             return employee;
         }
-        public void Update(Employee employee)
+        public void Update(User employee)
         {
-            DbContext.Employees.Update(employee);
+            DbContext.Users.Update(employee);
             DbContext.SaveChanges();
         }
     }

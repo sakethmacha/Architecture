@@ -5,19 +5,13 @@ namespace WebApp.Web.ViewModels
 {
     public class RequestLeaveViewModel
     {
-        [Required]
-        public int Id { get; set; }
-        [Required]
-        public string? Name { get; set; }
-
-        [Required]
-        public string? Email { get; set; }
-        [Required]
-        [DataType(DataType.Date)]
+        
+        [Required(ErrorMessage = "Date is required")]
         public DateTime From { get; set; }
 
-        [Required]
-        [DataType(DataType.Date)]
+        [Required(ErrorMessage = "Date is required")]
         public DateTime To { get; set; }
+
     }
+
 }

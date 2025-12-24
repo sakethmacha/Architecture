@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using WebApp.Application.UseCases;
+using WebApp.Domain.Entities;
 using WebApp.Web.ViewModels;
 namespace WebApp.Web.Controllers
 {
@@ -36,7 +37,8 @@ namespace WebApp.Web.Controllers
                 model.Name,
                 model.Email,
                 model.Password,
-                model.Role
+                model.Role!,
+                model.LeaveBalance=30
             );
 
             if (!success)
@@ -74,7 +76,6 @@ namespace WebApp.Web.Controllers
 
             var identity = new ClaimsIdentity(claims, "Cookies");
             var principal = new ClaimsPrincipal(identity);
-
             await HttpContext.SignInAsync("Cookies", principal);
 
             return RedirectToAction("LoginSuccess");

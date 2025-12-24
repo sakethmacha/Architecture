@@ -9,47 +9,12 @@ namespace WebApp.Infrastructure.Persistance
         public ApplicationDbContext(DbContextOptions options)
             : base(options) { }
 
-        //protected override void OnModelCreating(ModelBuilder modelBuilder)
-        //{
-        //    modelBuilder.Entity<Employee>(entity =>
-        //    {
-        //        entity.HasKey(e => e.Id);
-
-        //        entity.Property(e => e.Name)
-        //              .IsRequired()
-        //              .HasMaxLength(100);
-
-        //        entity.Property(e => e.Email)
-        //              .IsRequired()
-        //              .HasMaxLength(150);
-
-        //        entity.Property(e => e.LeaveBalance)
-        //              .IsRequired();
-        //    });
-
-
-        //    modelBuilder.Entity<LeaveRequest>(entity =>
-        //    {
-        //        entity.HasKey(l => l.Id);
-
-        //        entity.OwnsOne(l => l.Period, p =>
-        //        {
-        //            p.Property(x => x.From).IsRequired();
-        //            p.Property(x => x.To).IsRequired();
-        //        });
-        //    });
-        //    modelBuilder.Entity<LeavePeriod>(entity =>
-        //    {
-        //        entity.HasKey(l => l.Id);
-        //    });
-        //}
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Employee>(entity =>
+            modelBuilder.Entity<User>(entity =>
             {
                 entity.HasKey(e => e.Id);
             });
-
             modelBuilder.Entity<LeaveRequest>(entity =>
             {
                 entity.HasKey(l => l.Id);
@@ -66,8 +31,6 @@ namespace WebApp.Infrastructure.Persistance
                 });
             });
         }
-
-        public DbSet<Employee> Employees { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
         public DbSet<User> Users { get; set; }
     }

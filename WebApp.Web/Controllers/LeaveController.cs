@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebApp.Application.Exceptions;
 using WebApp.Application.UseCases;
 using WebApp.Web.ViewModels;
@@ -24,25 +25,31 @@ namespace WebApp.Web.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Employee")]
         [ResponseCache(Duration = 60, Location = ResponseCacheLocation.None, NoStore =true)]
         public IActionResult Request()
         {
             return View();
         }
-
+        [Authorize]
         [HttpPost]
         public IActionResult Request(RequestLeaveViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
+
             if (RequestLeaveUseCase == null)
             {
                 throw new NotFoundException("User not found");
             }
+
+            var email = User.FindFirstValue(ClaimTypes.Email);
+
+            if (string.IsNullOrEmpty(email))
+                return Unauthorized();
+
+
             RequestLeaveUseCase.Execute(
-                model.Name!,
-                model.Email!,
+                email,
                 model.From,
                 model.To
             );

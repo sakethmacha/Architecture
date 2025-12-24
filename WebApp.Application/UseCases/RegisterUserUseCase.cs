@@ -19,14 +19,14 @@ namespace WebApp.Application.UseCases
             PasswordHasher = passwordHasher;
         }
 
-        public async Task<bool> Execute(string name, string email, string password, string role)
+        public async Task<bool> Execute(string name, string email, string password, string role, int leaveBalance)
         {
             if (await UserRepository.ExistsAsync(email))
                 return false;
 
             var hash = PasswordHasher.Hash(password);
 
-            var user = new User(name, email, hash, role);
+            var user = new User(name, email, hash, role,leaveBalance);
 
             await UserRepository.AddAsync(user);
             return true;

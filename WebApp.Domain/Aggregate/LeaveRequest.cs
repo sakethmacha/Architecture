@@ -1,7 +1,7 @@
 ﻿
+using WebApp.Domain.Common;
 using WebApp.Domain.Events;
 using WebApp.Domain.ValueObjects;
-using WebApp.Domain.Common;
 
 namespace WebApp.Domain.Aggregate
 {

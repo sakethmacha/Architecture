@@ -17,14 +17,10 @@ namespace WebApp.Application.UseCases
             LeaveRepository = leaveRepo;
         }
 
-        public void Execute(string name, string email, DateTime from, DateTime to)
+        public void Execute(string email, DateTime from, DateTime to)
         {
-            // 🔑 Identify employee by email
+            //  Identify employee by email
             var employee = EmployeeRepository.GetByEmail(email);
-
-            // Optional safety check
-            if (!employee.Name!.Equals(name, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Name does not match employee record");
 
             var period = new LeavePeriod(from, to);
 

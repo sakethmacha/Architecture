@@ -9,8 +9,8 @@ namespace WebApp.Domain.Interfaces.Repositories
 {
     public interface IEmployeeRepository
     {
-        Employee GetById(int id);
-        void Update(Employee employee);
-        Employee GetByEmail(string email);
+        User GetById(int id);
+        void Update(User employee);
+        User GetByEmail(string email);
     }
 }

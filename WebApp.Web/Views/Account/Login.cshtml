@@ -1,41 +1,48 @@
-﻿<div class="container d-flex justify-content-center align-items-center vh-100">
-    <div class="card shadow-lg p-4" style="width: 400px;">
-        <h3 class="text-center mb-4">
-            <i class="fa-solid fa-right-to-bracket text-success"></i> Login
-        </h3>
+﻿@model WebApp.Web.ViewModels.LoginViewModel
 
-        <form asp-action="Login" method="post">
+@{
+    ViewData["Title"] = "Login";
+}
 
-            <div class="mb-3">
-                <label class="form-label">
-                    <i class="fa-solid fa-envelope"></i> Email
-                </label>
-                <input name="email" class="form-control" placeholder="Enter email" />
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="col-md-6 col-lg-5">
+
+        <div class="card shadow-lg border-0 rounded-4">
+            <div class="card-header bg-primary text-white text-center rounded-top-4">
+                <h4 class="mb-0">Login</h4>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label">
-                    <i class="fa-solid fa-lock"></i> Password
-                </label>
-                <input name="password" type="password" class="form-control" placeholder="Enter password" />
+            <div class="card-body p-4">
+
+                <form asp-action="Login" method="post">
+
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label fw-semibold"></label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-4">
+                        <label asp-for="Password" class="form-label fw-semibold"></label>
+                        <input asp-for="Password" type="password" class="form-control" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill">
+                            Login
+                        </button>
+                    </div>
+
+                </form>
+
             </div>
+        </div>
 
-            <button type="submit" class="btn btn-success w-100">
-                <i class="fa-solid fa-right-to-bracket"></i> Login
-            </button>
-
-            <div class="text-center mt-3">
-                <a asp-action="Register">Create new account</a>
-            </div>
-
-            @if (ViewBag.Error != null)
-            {
-                <div class="alert alert-danger mt-3">@ViewBag.Error</div>
-            }
-        </form>
     </div>
 </div>
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
 }
