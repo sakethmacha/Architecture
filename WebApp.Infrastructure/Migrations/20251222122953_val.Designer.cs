@@ -13,7 +13,7 @@ namespace WebApp.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     [Migration("20251222122953_val")]
-    partial class val
+    partial class Val
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

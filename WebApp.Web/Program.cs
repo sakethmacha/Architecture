@@ -17,7 +17,7 @@ namespace WebApp.Web
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            
             // Add services to the container.
 
             builder.Services.AddControllersWithViews();
@@ -62,7 +62,15 @@ namespace WebApp.Web
                                 .CreateLogger();
 
             builder.Host.UseSerilog();
+            builder.Services.AddHealthChecks()
+                .AddSqlServer(
+                    builder.Configuration.GetConnectionString("Constr")!,
+                    name: "sqlserver",
+                    tags: new[] { "ready" }
+                );
+
             var app = builder.Build();
+            app.UseResponseCaching();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -75,12 +83,37 @@ namespace WebApp.Web
 
             app.UseHttpsRedirection();
             app.UseRouting();
+            app.MapHealthChecks("/health/live", new()
+            {
+                Predicate = c => c.Tags.Contains("live")
+            });
+
+            app.MapHealthChecks("/health/ready", new()
+            {
+                ResponseWriter = async (context, report) =>
+                {
+                    context.Response.ContentType = "application/json";
+
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        status = report.Status.ToString(),
+                        checks = report.Entries.Select(e => new
+                        {
+                            name = e.Key,
+                            status = e.Value.Status.ToString(),
+                            error = e.Value.Exception?.Message
+                        })
+                    });
+                }
+            });
+
 
             app.UseAuthorization();
 
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
+
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 

@@ -11,7 +11,6 @@ namespace WebApp.Web.Controllers
         private readonly RequestLeaveUseCase RequestLeaveUseCase;
         private readonly ApproveLeaveUseCase ApproveLeaveUseCase;
         private readonly GetPendingLeaveRequestsUseCase GetPendingRequestUseCase;
-        //private readonly GetLeaveHistoryUseCase GetLeaveHistoryUseCase;
         private readonly RejectRequestLeaveUseCase RejectRequestLeaveUseCase;
 
         public LeaveController(
@@ -26,6 +25,7 @@ namespace WebApp.Web.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Employee")]
+        [ResponseCache(Duration = 60, Location = ResponseCacheLocation.None, NoStore =true)]
         public IActionResult Request()
         {
             return View();
