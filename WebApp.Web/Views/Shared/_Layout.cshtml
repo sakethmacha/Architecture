@@ -73,7 +73,13 @@
                                 </a>
                             </li>
                         }
-
+                        <li class="nav-item">
+                            <a class="nav-link text-light"
+                               asp-controller="health"
+                               asp-action="ready">
+                                check health
+                            </a>
+                        </li>
                     </ul>
 
                     <!-- RIGHT ACCOUNT DROPDOWN -->
@@ -88,7 +94,7 @@
                                aria-expanded="false">
 
                                 <i class="fa-solid fa-user"></i>
-                                @(User.Identity.IsAuthenticated
+                                @(User.Identity!.IsAuthenticated
                                                                 ? User.FindFirstValue(ClaimTypes.Email)
                                                                 : "Account")
                             </a>

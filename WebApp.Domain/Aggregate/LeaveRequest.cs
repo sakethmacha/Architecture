@@ -1,5 +1,4 @@
-﻿
-using WebApp.Domain.Common;
+﻿using WebApp.Domain.Common;
 using WebApp.Domain.Events;
 using WebApp.Domain.ValueObjects;
 

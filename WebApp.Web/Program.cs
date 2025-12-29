@@ -55,11 +55,10 @@ namespace WebApp.Web
                     policy.RequireRole("Admin"));
             });
             Log.Logger = new LoggerConfiguration()
-                                .ReadFrom.Configuration(builder.Configuration)
-                                .Enrich.FromLogContext()
-                                .WriteTo.Console()
-                                .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day)
-                                .CreateLogger();
+                                  .ReadFrom.Configuration(builder.Configuration)
+                                  .Enrich.FromLogContext()
+                                  .CreateLogger();
+
 
             builder.Host.UseSerilog();
             builder.Services.AddHealthChecks()
