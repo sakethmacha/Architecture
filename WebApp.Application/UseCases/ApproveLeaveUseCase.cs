@@ -27,5 +27,4 @@ namespace WebApp.Application.UseCases
             request.ClearDomainEvents();
         }
     }
-
 }
