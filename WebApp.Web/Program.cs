@@ -39,7 +39,7 @@ namespace WebApp.Web
             builder.Services.AddScoped<IEventHandler<LeaveRejectedEvent>, SendEmailOnLeaveRejected>();
             builder.Services.AddScoped<IEventHandler<LeaveApprovedEvent>, SendEmailOnLeaveApproved>();
             builder.Services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
-
+            Console.WriteLine("Hello World");
             builder.Services.AddAuthentication("Cookies")
             .AddCookie("Cookies", options =>
             {
