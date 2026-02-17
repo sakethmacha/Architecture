@@ -2,58 +2,80 @@ trigger:
   branches:
     include:
       - main
- 
+
 pool:
   name: 'pool'
- 
+
 variables:
   buildConfiguration: 'Release'
-  dotnetVersion: '8.x'
- 
+  solution: '**/*.sln'
+
 stages:
- 
+
   - stage: Build
     displayName: 'Build & Test'
     jobs:
       - job: BuildJob
         displayName: 'Build, Test, Publish'
         steps:
- 
-          # 1. Set up .NET
-          - task: UseDotNet@2
-            displayName: 'Set up .NET 8'
-            inputs:
-              version: '$(dotnetVersion)'
- 
-          # 2. Restore NuGet packages
+
+          # 1. Authenticate NuGet (needed for self-hosted agents)
+          - task: NuGetAuthenticate@1
+            displayName: 'Authenticate NuGet'
+
+          # 2. Restore NuGet packages for all projects
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet packages'
             inputs:
               command: 'restore'
-              projects: '**/*.csproj'
- 
-          # 3. Build the solution
+              projects: '$(solution)'
+              feedsToUse: 'select'
+
+          # 3. Build Domain (no dependencies)
           - task: DotNetCoreCLI@2
-            displayName: 'Build solution'
+            displayName: 'Build WebApp.Domain'
             inputs:
               command: 'build'
-              projects: '**/*.csproj'
+              projects: '**/WebApp.Domain/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
- 
- 
-          # 4. Publish the app
+
+          # 4. Build Application (depends on Domain)
           - task: DotNetCoreCLI@2
-            displayName: 'Publish app'
+            displayName: 'Build WebApp.Application'
+            inputs:
+              command: 'build'
+              projects: '**/WebApp.Application/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # 5. Build Infrastructure (depends on Domain + Application)
+          - task: DotNetCoreCLI@2
+            displayName: 'Build WebApp.Infrastructure'
+            inputs:
+              command: 'build'
+              projects: '**/WebApp.Infrastructure/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # 6. Build Web (depends on all)
+          - task: DotNetCoreCLI@2
+            displayName: 'Build WebApp.Web'
+            inputs:
+              command: 'build'
+              projects: '**/WebApp.Web/*.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          # 7. Publish the web app
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish WebApp.Web'
             inputs:
               command: 'publish'
-              publishWebProjects: true
+              projects: '**/WebApp.Web/*.csproj'
               arguments: >-
                 --configuration $(buildConfiguration)
                 --output $(Build.ArtifactStagingDirectory)
                 --no-build
               zipAfterPublish: true
- 
-          # 5. Upload artifact
+
+          # 8. Upload artifact
           - task: PublishBuildArtifacts@1
             displayName: 'Upload artifact'
             inputs:
