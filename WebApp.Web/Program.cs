@@ -24,7 +24,7 @@ namespace WebApp.Web
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(
-             builder.Configuration.GetConnectionString("Constr")));
+            builder.Configuration.GetConnectionString("Constr")));
 
             builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
             builder.Services.AddScoped<ILeaveRequestRepository, LeaveRequestRepository>();
@@ -48,7 +48,7 @@ namespace WebApp.Web
                 options.ExpireTimeSpan = TimeSpan.FromMinutes(60);
             });
 
-            // ---------------- AUTHORIZATION ----------------
+            // -------------- AUTHORIZATION --------------
             builder.Services.AddAuthorization(options =>
             {
                 options.AddPolicy("AdminOnly", policy =>
