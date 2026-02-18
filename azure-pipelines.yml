@@ -107,6 +107,12 @@ stages:
               slotName: 'staging'
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
+          - task: DotNetCoreCLI@2
+            displayName: 'Run EF Core Migrations'
+            inputs:
+              command: 'custom'
+              custom: 'ef'
+              arguments: 'database update --project WebApp.Infrastructure --startup-project WebApp.Web --connection "$(DbConnection)"'
 
   # =========================
   # SWAP TO PRODUCTION (WITH APPROVAL)
