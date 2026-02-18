@@ -107,12 +107,16 @@ stages:
               slotName: 'staging'
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Run EF Core Migrations'
+          - task: SqlAzureDacpacDeployment@1
+            displayName: 'Run Database Migration Script'
             inputs:
-              command: 'custom'
-              custom: 'ef'
-              arguments: 'database update --project WebApp.Infrastructure --startup-project WebApp.Web --connection "$(Constr)"'
+              azureSubscription: 'Azure Connect'
+              AuthenticationType: 'servicePrincipal'
+              ServerName: 'tcp:sqlservernames.database.windows.net,1433'
+              DatabaseName: 'DDD'
+              deployType: 'SqlTask'
+              SqlFile: '$(System.DefaultWorkingDirectory)/migrations.sql'
+              IpDetectionMethod: 'AutoDetect'
 
   # =========================
   # SWAP TO PRODUCTION (WITH APPROVAL)
