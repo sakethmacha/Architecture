@@ -112,6 +112,6 @@ stages:
           - task: AzureWebApp@1
             displayName: 'Deploy to Azure App Service'
             inputs:
-              azureSubscription: 'AzureConnect'   
+              azureSubscription: 'Azure Connect'   
               appName: 'WebApplicationDDD'            
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
