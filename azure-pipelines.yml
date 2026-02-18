@@ -112,7 +112,7 @@ stages:
             inputs:
               command: 'custom'
               custom: 'ef'
-              arguments: 'database update --project WebApp.Infrastructure --startup-project WebApp.Web --connection "$(DbConnection)"'
+              arguments: 'database update --project WebApp.Infrastructure --startup-project WebApp.Web --connection "$(Constr)"'
 
   # =========================
   # SWAP TO PRODUCTION (WITH APPROVAL)
