@@ -87,43 +87,107 @@ stages:
   # 🚀 DEPLOY STAGE (CD)
   # ========================
 
-  - stage: Deploy
-    displayName: 'Deploy to Azure'
-    dependsOn: Build
+  # - stage: Deploy
+  #   displayName: 'Deploy to Azure'
+  #   dependsOn: Build
 
-    jobs:
-      - job: DeployJob
-        displayName: 'Deploy Web App'
-        pool:
-          name: 'pool'
+  #   jobs:
+  #     - job: DeployJob
+  #       displayName: 'Deploy Web App'
+  #       pool:
+  #         name: 'pool'
 
-        steps:
+  #       steps:
 
-          # 1. Download artifact
-          - task: DownloadBuildArtifacts@0
-            displayName: 'Download Build Artifact'
-            inputs:
-              buildType: 'current'
-              downloadType: 'single'
-              artifactName: 'WebApplicationDDD'
-              downloadPath: '$(System.ArtifactsDirectory)'
+  #         # 1. Download artifact
+  #         - task: DownloadBuildArtifacts@0
+  #           displayName: 'Download Build Artifact'
+  #           inputs:
+  #             buildType: 'current'
+  #             downloadType: 'single'
+  #             artifactName: 'WebApplicationDDD'
+  #             downloadPath: '$(System.ArtifactsDirectory)'
 
-          # 2. Deploy to Azure App Service
-          - task: AzureWebApp@1
-            displayName: 'Deploy to Azure App Service'
-            inputs:
-              azureSubscription: 'Azure Connect'   
-              appName: 'WebApplicationDDD'
-              slotName: 'staging'            
-              package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
+  #         # 2. Deploy to Azure App Service
+  #         - task: AzureWebApp@1
+  #           displayName: 'Deploy to Azure App Service'
+  #           inputs:
+  #             azureSubscription: 'Azure Connect'   
+  #             appName: 'WebApplicationDDD'
+  #             slotName: 'staging'            
+  #             package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
-          # 3. Swap staging to Production
-          - task: AzureAppServiceManage@0
-            displayName: 'Swap Staging to Production'
-            inputs:
-              azureSubscription: 'Azure Connect'
-              WebAppName: 'WebApplicationDDD'
-              ResourceGroupName: 'sakethresoursegroup'
-              Action: 'Swap Slots'
-              SourceSlot: 'staging'
+  #         # 3. Swap staging to Production
+  #         - task: AzureAppServiceManage@0
+  #           displayName: 'Swap Staging to Production'
+  #           inputs:
+  #             azureSubscription: 'Azure Connect'
+  #             WebAppName: 'WebApplicationDDD'
+  #             ResourceGroupName: 'sakethresoursegroup'
+  #             Action: 'Swap Slots'
+  #             SourceSlot: 'staging'
+    - stage: Deploy
+      displayName: 'Deploy to Azure'
+      dependsOn: Build
+
+      jobs:
+
+        # =========================
+        # 1. DEPLOY TO STAGING
+        # =========================
+        - deployment: DeployToStaging
+          displayName: 'Deploy to Staging'
+          environment: 'staging'   # no approval here
+          pool:
+            name: 'pool'
+
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+
+                  # Download artifact
+                  - task: DownloadBuildArtifacts@0
+                    displayName: 'Download Build Artifact'
+                    inputs:
+                      buildType: 'current'
+                      downloadType: 'single'
+                      artifactName: 'WebApplicationDDD'
+                      downloadPath: '$(System.ArtifactsDirectory)'
+
+                  # Deploy to staging slot
+                  - task: AzureWebApp@1
+                    displayName: 'Deploy to Staging Slot'
+                    inputs:
+                      azureSubscription: 'Azure Connect'
+                      appName: 'WebApplicationDDD'
+                      slotName: 'staging'
+                      package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
+
+
+        # =========================
+        # 2. APPROVAL + SWAP
+        # =========================
+        - deployment: SwapToProduction
+          displayName: 'Swap to Production'
+          dependsOn: DeployToStaging
+          environment: 'Production'   # 🔴 approval happens here
+          pool:
+            name: 'pool'
+
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+
+                  # Swap slots
+                  - task: AzureAppServiceManage@0
+                    displayName: 'Swap Staging to Production'
+                    inputs:
+                      azureSubscription: 'Azure Connect'
+                      WebAppName: 'WebApplicationDDD'
+                      ResourceGroupName: 'sakethresoursegroup'
+                      Action: 'Swap Slots'
+                      SourceSlot: 'staging'
+
 
