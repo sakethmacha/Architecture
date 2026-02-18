@@ -118,12 +118,12 @@ stages:
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
           # 3. Swap staging to Production
-              - task: AzureAppServiceManage@0
-              displayName: 'Swap Staging to Production'
-              inputs:
-                azureSubscription: 'Azure Connect'
-                WebAppName: 'WebApplicationDDD'
-                ResourceGroupName: 'sakethresoursegroup'
-                Action: 'Swap Slots'
-                SourceSlot: 'staging'
+          - task: AzureAppServiceManage@0
+            displayName: 'Swap Staging to Production'
+            inputs:
+              azureSubscription: 'Azure Connect'
+              WebAppName: 'WebApplicationDDD'
+              ResourceGroupName: 'sakethresoursegroup'
+              Action: 'Swap Slots'
+              SourceSlot: 'staging'
 
