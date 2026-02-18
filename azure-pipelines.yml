@@ -85,23 +85,27 @@ stages:
     displayName: 'Deploy to Staging'
     dependsOn: Build
     jobs:
-      - deployment: DeployToStaging
+      - job: DeployJob
         displayName: 'Deploy to Staging Slot'
-        environment: 'staging'  # No approval needed here
         pool:
           name: 'pool'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
+        steps:
 
-                - task: AzureWebApp@1
-                  displayName: 'Deploy to Staging Slot'
-                  inputs:
-                    azureSubscription: 'Azure Connect'
-                    appName: 'WebApplicationDDD'
-                    slotName: 'staging'
-                    package: '$(Pipeline.Workspace)/WebApplicationDDD/**/*.zip'
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'WebApplicationDDD'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy to Staging Slot'
+            inputs:
+              azureSubscription: 'Azure Connect'
+              appName: 'WebApplicationDDD'
+              slotName: 'staging'
+              package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
 
   # =========================
@@ -113,7 +117,7 @@ stages:
     jobs:
       - deployment: SwapToProduction
         displayName: 'Swap Staging to Production'
-        environment: 'production'  # Approval configured here
+        environment: 'production'  # This triggers approval
         pool:
           name: 'pool'
         strategy:
