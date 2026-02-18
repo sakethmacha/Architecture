@@ -105,7 +105,7 @@ namespace WebApp.Web
                     });
                 }
             });
-            Console.WriteLine("Hello");
+            Console.WriteLine("Hello World");
 
             app.UseAuthorization();
 
