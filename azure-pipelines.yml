@@ -113,5 +113,6 @@ stages:
             displayName: 'Deploy to Azure App Service'
             inputs:
               azureSubscription: 'Azure Connect'   
-              appName: 'WebApplicationDDD'            
+              appName: 'WebApplicationDDD'
+              slotName: 'staging'            
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
