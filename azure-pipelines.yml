@@ -12,6 +12,9 @@ variables:
 
 stages:
 
+  # =========================
+  # BUILD STAGE
+  # =========================
   - stage: Build
     displayName: 'Build & Test'
     jobs:
@@ -19,11 +22,9 @@ stages:
         displayName: 'Build, Test, Publish'
         steps:
 
-          # 1. Authenticate NuGet (needed for self-hosted agents)
           - task: NuGetAuthenticate@1
             displayName: 'Authenticate NuGet'
 
-          # 2. Restore NuGet packages for all projects
           - task: DotNetCoreCLI@2
             displayName: 'Restore NuGet packages'
             inputs:
@@ -31,7 +32,6 @@ stages:
               projects: '$(solution)'
               feedsToUse: 'select'
 
-          # 3. Build Domain
           - task: DotNetCoreCLI@2
             displayName: 'Build WebApp.Domain'
             inputs:
@@ -39,7 +39,6 @@ stages:
               projects: '**/WebApp.Domain/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # 4. Build Application
           - task: DotNetCoreCLI@2
             displayName: 'Build WebApp.Application'
             inputs:
@@ -47,7 +46,6 @@ stages:
               projects: '**/WebApp.Application/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # 5. Build Infrastructure
           - task: DotNetCoreCLI@2
             displayName: 'Build WebApp.Infrastructure'
             inputs:
@@ -55,7 +53,6 @@ stages:
               projects: '**/WebApp.Infrastructure/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # 6. Build Web
           - task: DotNetCoreCLI@2
             displayName: 'Build WebApp.Web'
             inputs:
@@ -63,7 +60,6 @@ stages:
               projects: '**/WebApp.Web/*.csproj'
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # 7. Publish the web app
           - task: DotNetCoreCLI@2
             displayName: 'Publish WebApp.Web'
             inputs:
@@ -75,7 +71,6 @@ stages:
                 --no-build
               zipAfterPublish: true
 
-          # 8. Upload artifact
           - task: PublishBuildArtifacts@1
             displayName: 'Upload artifact'
             inputs:
@@ -83,104 +78,49 @@ stages:
               artifactName: 'WebApplicationDDD'
 
 
-  # ========================
-  # 🚀 DEPLOY STAGE (CD)
-  # ========================
-
-  # - stage: Deploy
-  #   displayName: 'Deploy to Azure'
-  #   dependsOn: Build
-
-  #   jobs:
-  #     - job: DeployJob
-  #       displayName: 'Deploy Web App'
-  #       pool:
-  #         name: 'pool'
-
-  #       steps:
-
-  #         # 1. Download artifact
-  #         - task: DownloadBuildArtifacts@0
-  #           displayName: 'Download Build Artifact'
-  #           inputs:
-  #             buildType: 'current'
-  #             downloadType: 'single'
-  #             artifactName: 'WebApplicationDDD'
-  #             downloadPath: '$(System.ArtifactsDirectory)'
-
-  #         # 2. Deploy to Azure App Service
-  #         - task: AzureWebApp@1
-  #           displayName: 'Deploy to Azure App Service'
-  #           inputs:
-  #             azureSubscription: 'Azure Connect'   
-  #             appName: 'WebApplicationDDD'
-  #             slotName: 'staging'            
-  #             package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
-
-  #         # 3. Swap staging to Production
-  #         - task: AzureAppServiceManage@0
-  #           displayName: 'Swap Staging to Production'
-  #           inputs:
-  #             azureSubscription: 'Azure Connect'
-  #             WebAppName: 'WebApplicationDDD'
-  #             ResourceGroupName: 'sakethresoursegroup'
-  #             Action: 'Swap Slots'
-  #             SourceSlot: 'staging'
-  - stage: Deploy
-    displayName: 'Deploy to Azure'
+  # =========================
+  # DEPLOY TO STAGING (NO APPROVAL)
+  # =========================
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
     dependsOn: Build
-
     jobs:
-
-      # =========================
-      # 1. DEPLOY TO STAGING
-      # =========================
       - deployment: DeployToStaging
-        displayName: 'Deploy to Staging'
-        environment: 'staging'   # no approval here
+        displayName: 'Deploy to Staging Slot'
+        environment: 'staging'  # No approval needed here
         pool:
           name: 'pool'
-
         strategy:
           runOnce:
             deploy:
               steps:
 
-                # Download artifact
-                - task: DownloadBuildArtifacts@0
-                  displayName: 'Download Build Artifact'
-                  inputs:
-                    buildType: 'current'
-                    downloadType: 'single'
-                    artifactName: 'WebApplicationDDD'
-                    downloadPath: '$(System.ArtifactsDirectory)'
-
-                # Deploy to staging slot
                 - task: AzureWebApp@1
                   displayName: 'Deploy to Staging Slot'
                   inputs:
                     azureSubscription: 'Azure Connect'
                     appName: 'WebApplicationDDD'
                     slotName: 'staging'
-                    package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
+                    package: '$(Pipeline.Workspace)/WebApplicationDDD/**/*.zip'
 
 
-      # =========================
-      # 2. APPROVAL + SWAP
-      # =========================
+  # =========================
+  # SWAP TO PRODUCTION (WITH APPROVAL)
+  # =========================
+  - stage: SwapProduction
+    displayName: 'Swap to Production'
+    dependsOn: DeployStaging
+    jobs:
       - deployment: SwapToProduction
-        displayName: 'Swap to Production'
-        dependsOn: DeployToStaging
-        environment: 'Production'   # 🔴 approval happens here
+        displayName: 'Swap Staging to Production'
+        environment: 'production'  # Approval configured here
         pool:
           name: 'pool'
-
         strategy:
           runOnce:
             deploy:
               steps:
 
-                # Swap slots
                 - task: AzureAppServiceManage@0
                   displayName: 'Swap Staging to Production'
                   inputs:
@@ -189,5 +129,3 @@ stages:
                     ResourceGroupName: 'sakethresoursegroup'
                     Action: 'Swap Slots'
                     SourceSlot: 'staging'
-
-
