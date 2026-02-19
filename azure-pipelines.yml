@@ -107,7 +107,6 @@ stages:
               slotName: 'staging'
               package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
-
   # =========================
   # SWAP TO PRODUCTION (WITH APPROVAL)
   # =========================
