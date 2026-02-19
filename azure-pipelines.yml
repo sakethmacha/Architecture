@@ -9,7 +9,7 @@ pool:
 variables:
   buildConfiguration: 'Release'
   solution: '**/*.sln'
-  keyVaultName: 'your-keyvault-name'
+  keyVaultName: 'keyvault1232123'
 
 stages:
 
@@ -121,7 +121,7 @@ stages:
                 --resource-group sakethresoursegroup \
                 --slot staging \
                 --settings \
-                  ConnectionStrings__DefaultConnection="@Microsoft.KeyVault(SecretUri=https://$(keyvault1232123).vault.azure.net/secrets/Constr)" \
+                  ConnectionStrings__DefaultConnection="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr)" \
                   ASPNETCORE_ENVIRONMENT="Staging" \
                 --slot-settings ConnectionStrings__Constr
 
@@ -155,7 +155,7 @@ stages:
                       --name WebApplicationDDD \
                       --resource-group sakethresoursegroup \
                       --settings \
-                        ConnectionStrings__DefaultConnection="@Microsoft.KeyVault(SecretUri=https://$(keyvault1232123).vault.azure.net/secrets/Constr)" \
+                        ConnectionStrings__DefaultConnection="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr)" \
                         ASPNETCORE_ENVIRONMENT="Production" \
                       --slot-settings ConnectionStrings__Constr
 
