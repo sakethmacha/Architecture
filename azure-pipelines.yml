@@ -10,6 +10,9 @@ variables:
   buildConfiguration: 'Release'
   solution: '**/*.sln'
   keyVaultName: 'keyvault1232123'
+  azureSubscription: 'Azure Connect'
+  webAppName: 'WebApplicationDDD'
+  resourceGroup: 'sakethresoursegroup'
 
 stages:
 
@@ -103,27 +106,40 @@ stages:
         - task: AzureWebApp@1
           displayName: 'Deploy to Staging Slot'
           inputs:
-            azureSubscription: 'Azure Connect'
-            appName: 'WebApplicationDDD'
+            azureSubscription: '$(azureSubscription)'
+            appName: '$(webAppName)'
             slotName: 'staging'
             package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
-        # 🔐 Configure STAGING (immediate)
         - task: AzureCLI@2
-          displayName: 'Configure Staging Key Vault Connection'
+          displayName: 'Configure Staging App Settings'
           inputs:
-            azureSubscription: 'Azure Connect'
+            azureSubscription: '$(azureSubscription)'
             scriptType: 'bash'
             scriptLocation: 'inlineScript'
             inlineScript: |
               az webapp config appsettings set \
-                --name WebApplicationDDD \
-                --resource-group sakethresoursegroup \
+                --name $(webAppName) \
+                --resource-group $(resourceGroup) \
                 --slot staging \
                 --settings \
-                  ConnectionStrings__Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr)" \
                   ASPNETCORE_ENVIRONMENT="Staging" \
-                --slot-settings ConnectionStrings__Constr
+                  ApplicationInsights__InstrumentationKey="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
+
+        - task: AzureCLI@2
+          displayName: 'Configure Staging Connection String'
+          inputs:
+            azureSubscription: '$(azureSubscription)'
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              az webapp config connection-string set \
+                --name $(webAppName) \
+                --resource-group $(resourceGroup) \
+                --slot staging \
+                --connection-string-type SQLAzure \
+                --settings \
+                  Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
 
 
 # =========================
@@ -143,28 +159,39 @@ stages:
           deploy:
             steps:
 
-              # 🔐 Configure PRODUCTION BEFORE SWAP
               - task: AzureCLI@2
-                displayName: 'Configure Production Key Vault Connection'
+                displayName: 'Configure Production App Settings'
                 inputs:
-                  azureSubscription: 'Azure Connect'
+                  azureSubscription: '$(azureSubscription)'
                   scriptType: 'bash'
                   scriptLocation: 'inlineScript'
                   inlineScript: |
                     az webapp config appsettings set \
-                      --name WebApplicationDDD \
-                      --resource-group sakethresoursegroup \
+                      --name $(webAppName) \
+                      --resource-group $(resourceGroup) \
                       --settings \
-                        ConnectionStrings__Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr)" \
                         ASPNETCORE_ENVIRONMENT="Production" \
-                      --slot-settings ConnectionStrings__Constr
+                        ApplicationInsights__InstrumentationKey="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
 
-              # 🔄 Swap
+              - task: AzureCLI@2
+                displayName: 'Configure Production Connection String'
+                inputs:
+                  azureSubscription: '$(azureSubscription)'
+                  scriptType: 'bash'
+                  scriptLocation: 'inlineScript'
+                  inlineScript: |
+                    az webapp config connection-string set \
+                      --name $(webAppName) \
+                      --resource-group $(resourceGroup) \
+                      --connection-string-type SQLAzure \
+                      --settings \
+                        Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
+
               - task: AzureAppServiceManage@0
                 displayName: 'Swap Staging to Production'
                 inputs:
-                  azureSubscription: 'Azure Connect'
-                  WebAppName: 'WebApplicationDDD'
-                  ResourceGroupName: 'sakethresoursegroup'
+                  azureSubscription: '$(azureSubscription)'
+                  WebAppName: '$(webAppName)'
+                  ResourceGroupName: '$(resourceGroup)'
                   Action: 'Swap Slots'
                   SourceSlot: 'staging'
