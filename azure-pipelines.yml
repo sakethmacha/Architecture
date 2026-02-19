@@ -115,31 +115,49 @@ stages:
           displayName: 'Configure Staging App Settings'
           inputs:
             azureSubscription: '$(azureSubscription)'
-            scriptType: 'bash'
+            scriptType: 'pscore'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              az webapp config appsettings set \
-                --name $(webAppName) \
-                --resource-group $(resourceGroup) \
-                --slot staging \
-                --settings \
-                  ASPNETCORE_ENVIRONMENT="Staging" \
-                  ApplicationInsights__InstrumentationKey="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
+              Write-Host "Setting app settings for staging slot..."
+              
+              az webapp config appsettings set `
+                --name $(webAppName) `
+                --resource-group $(resourceGroup) `
+                --slot staging `
+                --settings `
+                  ASPNETCORE_ENVIRONMENT="Staging" `
+                  "ApplicationInsights__InstrumentationKey=@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
+              
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to set app settings"
+                exit 1
+              }
+              
+              Write-Host "App settings configured successfully"
 
         - task: AzureCLI@2
           displayName: 'Configure Staging Connection String'
           inputs:
             azureSubscription: '$(azureSubscription)'
-            scriptType: 'bash'
+            scriptType: 'pscore'
             scriptLocation: 'inlineScript'
             inlineScript: |
-              az webapp config connection-string set \
-                --name $(webAppName) \
-                --resource-group $(resourceGroup) \
-                --slot staging \
-                --connection-string-type SQLAzure \
-                --settings \
-                  Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
+              Write-Host "Setting connection string for staging slot..."
+              
+              az webapp config connection-string set `
+                --name $(webAppName) `
+                --resource-group $(resourceGroup) `
+                --slot staging `
+                --connection-string-type SQLAzure `
+                --settings `
+                  "Constr=@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
+              
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to set connection string"
+                exit 1
+              }
+              
+              Write-Host "Connection string configured successfully"
 
 
 # =========================
@@ -163,29 +181,47 @@ stages:
                 displayName: 'Configure Production App Settings'
                 inputs:
                   azureSubscription: '$(azureSubscription)'
-                  scriptType: 'bash'
+                  scriptType: 'pscore'
                   scriptLocation: 'inlineScript'
                   inlineScript: |
-                    az webapp config appsettings set \
-                      --name $(webAppName) \
-                      --resource-group $(resourceGroup) \
-                      --settings \
-                        ASPNETCORE_ENVIRONMENT="Production" \
-                        ApplicationInsights__InstrumentationKey="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
+                    Write-Host "Setting app settings for production slot..."
+                    
+                    az webapp config appsettings set `
+                      --name $(webAppName) `
+                      --resource-group $(resourceGroup) `
+                      --settings `
+                        ASPNETCORE_ENVIRONMENT="Production" `
+                        "ApplicationInsights__InstrumentationKey=@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/AppInsightsKey/)"
+                    
+                    if ($LASTEXITCODE -ne 0) {
+                      Write-Error "Failed to set app settings"
+                      exit 1
+                    }
+                    
+                    Write-Host "App settings configured successfully"
 
               - task: AzureCLI@2
                 displayName: 'Configure Production Connection String'
                 inputs:
                   azureSubscription: '$(azureSubscription)'
-                  scriptType: 'bash'
+                  scriptType: 'pscore'
                   scriptLocation: 'inlineScript'
                   inlineScript: |
-                    az webapp config connection-string set \
-                      --name $(webAppName) \
-                      --resource-group $(resourceGroup) \
-                      --connection-string-type SQLAzure \
-                      --settings \
-                        Constr="@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
+                    Write-Host "Setting connection string for production slot..."
+                    
+                    az webapp config connection-string set `
+                      --name $(webAppName) `
+                      --resource-group $(resourceGroup) `
+                      --connection-string-type SQLAzure `
+                      --settings `
+                        "Constr=@Microsoft.KeyVault(SecretUri=https://$(keyVaultName).vault.azure.net/secrets/Constr/)"
+                    
+                    if ($LASTEXITCODE -ne 0) {
+                      Write-Error "Failed to set connection string"
+                      exit 1
+                    }
+                    
+                    Write-Host "Connection string configured successfully"
 
               - task: AzureAppServiceManage@0
                 displayName: 'Swap Staging to Production'
