@@ -123,7 +123,7 @@ stages:
                 {
                   "name": "ASPNETCORE_ENVIRONMENT",
                   "value": "Staging",
-                  "slotSetting": false
+                  "slotSetting": true
                 }
               ]
             connectionStrings: |
@@ -165,7 +165,7 @@ stages:
                       {
                         "name": "ASPNETCORE_ENVIRONMENT",
                         "value": "Production",
-                        "slotSetting": false
+                        "slotSetting": true
                       }
                     ]
                   connectionStrings: |
