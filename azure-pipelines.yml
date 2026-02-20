@@ -206,7 +206,7 @@ stages:
         azureSubscription: '$(azureSubscription)'
         appName: '$(containerWebAppName)'
         slotName: 'staging'
-        containers: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
+        imageName: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
 
     - task: AzureAppServiceSettings@1
       displayName: 'Configure WebApp2 Staging Settings'
