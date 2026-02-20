@@ -11,19 +11,25 @@ variables:
   solution: '**/*.sln'
   keyVaultName: 'keyvault1232123'
   azureSubscription: 'Azure Connect'
-  webAppName: 'WebApplicationDDD'
+  webAppName: 'sakethwebapp'
   resourceGroup: 'sakethresoursegroup'
 
-stages:
+  # ── Docker / ACR variables (NEW) ──
+  acrName: 'sakethacr'
+  acrLoginServer: 'sakethacr.azurecr.io'
+  imageRepository: 'webappddd'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  imageTag: '$(Build.BuildId)'
+  acrServiceConnection: 'ACRServiceConnection'
 
 # =========================
 # BUILD STAGE
 # =========================
 - stage: Build
-  displayName: 'Build & Test'
+  displayName: 'Build, Test & Docker Push'
   jobs:
     - job: BuildJob
-      displayName: 'Build, Test, Publish'
+      displayName: 'Build, Publish & Push to ACR'
       steps:
 
         - task: NuGetAuthenticate@1
@@ -64,52 +70,65 @@ stages:
             projects: '**/WebApp.Web/*.csproj'
             arguments: '--configuration $(buildConfiguration) --no-restore'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Publish WebApp.Web'
-          inputs:
-            command: 'publish'
-            projects: '**/WebApp.Web/*.csproj'
-            arguments: >-
-              --configuration $(buildConfiguration)
-              --output $(Build.ArtifactStagingDirectory)
-              --no-build
-            zipAfterPublish: true
+        # ── NEW: Docker Build & Push to ACR ──
 
-        - task: PublishBuildArtifacts@1
-          displayName: 'Upload artifact'
+        - task: Docker@2
+          displayName: 'Login to ACR'
           inputs:
-            pathToPublish: '$(Build.ArtifactStagingDirectory)'
-            artifactName: 'WebApplicationDDD'
+            command: login
+            containerRegistry: '$(acrServiceConnection)'
+
+        - task: Docker@2
+          displayName: 'Build Docker Image'
+          inputs:
+            command: build
+            repository: '$(imageRepository)'
+            dockerfile: '$(dockerfilePath)'
+            containerRegistry: '$(acrServiceConnection)'
+            tags: |
+              $(imageTag)
+              latest
+
+        - task: Docker@2
+          displayName: 'Push Docker Image to ACR'
+          inputs:
+            command: push
+            repository: '$(imageRepository)'
+            containerRegistry: '$(acrServiceConnection)'
+            tags: |
+              $(imageTag)
+              latest
+
+        # ── Store imageTag for later stages ──
+        - script: echo "##vso[task.setvariable variable=imageTag;isOutput=true]$(imageTag)"
+          name: exportTag
+          displayName: 'Export Image Tag to next stages'
 
 
 # =========================
 # DEPLOY TO STAGING
 # =========================
 - stage: DeployStaging
-  displayName: 'Deploy to Staging'
+  displayName: 'Deploy Container to Staging'
   dependsOn: Build
+  variables:
+    # Pull imageTag from Build stage
+    imageTagFromBuild: $[ stageDependencies.Build.BuildJob.outputs['exportTag.imageTag'] ]
   jobs:
     - job: DeployJob
-      displayName: 'Deploy to Staging Slot'
+      displayName: 'Deploy Container to Staging Slot'
       pool:
         name: 'pool'
       steps:
 
-        - task: DownloadBuildArtifacts@0
-          displayName: 'Download artifact'
-          inputs:
-            buildType: 'current'
-            downloadType: 'single'
-            artifactName: 'WebApplicationDDD'
-            downloadPath: '$(System.ArtifactsDirectory)'
-
-        - task: AzureWebApp@1
-          displayName: 'Deploy to Staging Slot'
+        # ── Deploy container image to staging slot ──
+        - task: AzureWebAppContainer@1
+          displayName: 'Deploy Container to Staging Slot'
           inputs:
             azureSubscription: '$(azureSubscription)'
             appName: '$(webAppName)'
             slotName: 'staging'
-            package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
+            imageName: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
 
         - task: AzureAppServiceSettings@1
           displayName: 'Configure Staging Settings'
@@ -124,6 +143,11 @@ stages:
                   "name": "ASPNETCORE_ENVIRONMENT",
                   "value": "Staging",
                   "slotSetting": true
+                },
+                {
+                  "name": "WEBSITES_PORT",
+                  "value": "8080",
+                  "slotSetting": false
                 }
               ]
             connectionStrings: |
@@ -166,6 +190,11 @@ stages:
                         "name": "ASPNETCORE_ENVIRONMENT",
                         "value": "Production",
                         "slotSetting": true
+                      },
+                      {
+                        "name": "WEBSITES_PORT",
+                        "value": "8080",
+                        "slotSetting": false
                       }
                     ]
                   connectionStrings: |
