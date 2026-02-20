@@ -195,7 +195,7 @@ stages:
       name: 'pool'
     steps:
 
-    - script: echo "Deploying image $(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)"
+    - script: echo "Deploying image $(acrLoginServer)/$(imageRepository):$(imageTag)"
       displayName: 'Debug: Print full image reference'
 
     - task: AzureWebAppContainer@1
