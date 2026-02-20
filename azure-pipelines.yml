@@ -167,6 +167,7 @@ stages:
         appName: '$(webAppName)'
         resourceGroupName: '$(resourceGroup)'
         slotName: 'staging'
+        continueOnError: true
         appSettings: |
           [
             {
@@ -226,6 +227,7 @@ stages:
         appName: '$(containerWebAppName)'
         resourceGroupName: '$(resourceGroup)'
         slotName: 'staging'
+        continueOnError: true
         appSettings: |
           [
             {
@@ -274,6 +276,7 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appName: '$(webAppName)'
               resourceGroupName: '$(resourceGroup)'
+              continueOnError: true
               appSettings: |
                 [
                   {
@@ -326,6 +329,7 @@ stages:
               azureSubscription: '$(azureSubscription)'
               appName: '$(containerWebAppName)'
               resourceGroupName: '$(resourceGroup)'
+              continueOnError: true
               appSettings: |
                 [
                   {
