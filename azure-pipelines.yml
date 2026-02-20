@@ -13,13 +13,10 @@ variables:
   azureSubscription: 'Azure Connect'
   resourceGroup: 'sakethresoursegroup'
 
-  # ── Shared Connection String (same for both web apps) ──
   connectionString: '@Microsoft.KeyVault(SecretUri=https://keyvault1232123.vault.azure.net/secrets/Constr/)'
 
-  # ── Web App 1 — Normal Zip Deploy ──
   webAppName: 'WebApplicationDDD'
 
-  # ── Web App 2 — Docker/Container Deploy ──
   containerWebAppName: 'sakethwebapp'
   acrLoginServer: 'sakethacr.azurecr.io'
   imageRepository: 'webappddd'
@@ -77,7 +74,6 @@ stages:
         projects: '**/WebApp.Web/*.csproj'
         arguments: '--configuration $(buildConfiguration) --no-restore'
 
-    # ── Publish zip for WebApplicationDDD ──
     - task: DotNetCoreCLI@2
       displayName: 'Publish WebApp.Web'
       inputs:
@@ -95,7 +91,6 @@ stages:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'WebApplicationDDD'
 
-    # ── Docker Build & Push for sakethwebapp ──
     - task: Docker@2
       displayName: 'Login to ACR'
       inputs:
@@ -123,7 +118,7 @@ stages:
           $(imageTag)
           latest
 
-    - script: echo "##vso[task.setvariable variable=imageTag;isOutput=true]$(imageTag)"
+    - script: echo "##vso[task.setvariable variable=imageTag;isOutput=true]$(Build.BuildId)"
       name: exportTag
       displayName: 'Export Image Tag to next stages'
 
@@ -200,15 +195,18 @@ stages:
       name: 'pool'
     steps:
 
+    - script: echo "Deploying image $(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)"
+      displayName: 'Debug: Print full image reference'
+
     - task: AzureWebAppContainer@1
       displayName: 'Deploy Container to Staging Slot'
       inputs:
         azureSubscription: '$(azureSubscription)'
         appName: '$(containerWebAppName)'
+        deployToSlotOrASE: true
+        resourceGroupName: '$(resourceGroup)'
         slotName: 'staging'
         containers: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
-        containerRegistryType: 'Azure Container Registry'
-        azureContainerRegistry: '$(acrServiceConnection)'
 
     - task: AzureAppServiceSettings@1
       displayName: 'Configure WebApp2 Staging Settings'
