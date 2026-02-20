@@ -200,19 +200,15 @@ stages:
       name: 'pool'
     steps:
 
-    # ── Changed from AzureWebAppContainer@1 to AzureRmWebAppDeployment@4 ──
-    - task: AzureRmWebAppDeployment@4
+    - task: AzureWebAppContainer@1
       displayName: 'Deploy Container to Staging Slot'
       inputs:
         azureSubscription: '$(azureSubscription)'
-        appType: 'webAppContainer'
-        WebAppName: '$(containerWebAppName)'
-        deployToSlotOrASE: true
-        ResourceGroupName: '$(resourceGroup)'
-        SlotName: 'staging'
-        DockerNamespace: '$(acrLoginServer)'
-        DockerRepository: '$(imageRepository)'
-        DockerImageTag: '$(imageTagFromBuild)'
+        appName: '$(containerWebAppName)'
+        slotName: 'staging'
+        containers: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
+        containerRegistryType: 'Azure Container Registry'
+        azureContainerRegistry: '$(acrServiceConnection)'
 
     - task: AzureAppServiceSettings@1
       displayName: 'Configure WebApp2 Staging Settings'
