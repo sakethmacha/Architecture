@@ -17,12 +17,14 @@ variables:
 
   webAppName: 'WebApplicationDDD'
 
-  containerWebAppName: 'sakethwebapp'
+  # ✅ UPDATED: was 'sakethwebapp', now 'webappddd-app'
+  containerWebAppName: 'webappddd-app'
   acrLoginServer: 'sakethacr.azurecr.io'
   imageRepository: 'webappddd'
   dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   imageTag: '$(Build.BuildId)'
-  acrServiceConnection: 'ACRServiceConnection'
+  # ✅ UPDATED: make sure this matches your service connection name in DevOps
+  acrServiceConnection: 'sakethacr-connection'
 
 stages:
 
@@ -118,7 +120,6 @@ stages:
           $(imageTag)
           latest
 
-    # ── FIX: Use PowerShell to avoid cmd.exe trailing quote issue ──
     - task: PowerShell@2
       name: exportTag
       displayName: 'Export Image Tag to next stages'
@@ -192,7 +193,7 @@ stages:
 # Web App 2 — Container Deploy
 # =========================
 - stage: DeployStaging_WebApp2
-  displayName: 'Deploy Container to sakethwebapp Staging'
+  displayName: 'Deploy Container to webappddd-app Staging'
   dependsOn: Build
   variables:
     imageTagFromBuild: $[ stageDependencies.Build.BuildJob.outputs['exportTag.imageTag'] ]
@@ -310,7 +311,7 @@ stages:
 # Web App 2 — Container
 # =========================
 - stage: SwapProduction_WebApp2
-  displayName: 'Swap sakethwebapp to Production'
+  displayName: 'Swap webappddd-app to Production'
   dependsOn: DeployStaging_WebApp2
   jobs:
   - deployment: SwapWebApp2
