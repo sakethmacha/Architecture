@@ -7,360 +7,358 @@ pool:
   name: 'pool'
 
 variables:
-  # Docker/ACR variables
-  - name: dockerRegistryServiceConnection
-    value: 'sakethacr-connection'
-  - name: imageRepository
-    value: 'webappddd'
-  - name: containerRegistry
-    value: 'sakethacr.azurecr.io'
-  - name: dockerfilePath
-    value: '$(Build.SourcesDirectory)/Dockerfile'
-  - name: tag
-    value: '$(Build.BuildNumber)'
+  buildConfiguration: 'Release'
+  solution: '**/*.sln'
+  keyVaultName: 'keyvault1232123'
+  azureSubscription: 'Azure Connect'
+  resourceGroup: 'sakethresoursegroup'
 
-  # App Service variables
-  - name: regularAppName
-    value: 'WebApplicationDDD'
-  - name: containerAppName
-    value: 'webappddd-app'
-  - name: azureServiceConnection
-    value: 'Azure Connect'
-  - name: resourceGroup
-    value: 'sakethresoursegroup'
-  - name: artifactName
-    value: 'WebApplicationDDD'
-  - name: buildConfiguration
-    value: 'Release'
-  - name: solution
-    value: '**/*.sln'
+  connectionString: '@Microsoft.KeyVault(SecretUri=https://keyvault1232123.vault.azure.net/secrets/Constr/)'
 
-  # KeyVault connection string reference
-  - name: connectionString
-    value: '@Microsoft.KeyVault(SecretUri=https://keyvault1232123.vault.azure.net/secrets/Constr/)'
+  webAppName: 'WebApplicationDDD'
 
+  # ✅ UPDATED: was 'sakethwebapp', now 'webappddd-app'
+  containerWebAppName: 'webappddd-app'
+  acrLoginServer: 'sakethacr.azurecr.io'
+  imageRepository: 'webappddd'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
+  imageTag: '$(Build.BuildId)'
+  # ✅ UPDATED: make sure this matches your service connection name in DevOps
+  acrServiceConnection: 'sakethacr-connection'
 
-# ══════════════════════════════════════════════════════════════════════════
-# STAGE 1: BUILD (Shared by both deployments)
-# ══════════════════════════════════════════════════════════════════════════
 stages:
+
+# =========================
+# BUILD STAGE
+# =========================
 - stage: Build
-  displayName: 'Build & Publish'
+  displayName: 'Build & Docker Push'
   jobs:
-    - job: BuildJob
-      displayName: 'Build, Publish & Push to ACR'
-      steps:
+  - job: BuildJob
+    displayName: 'Build, Publish & Push to ACR'
+    steps:
 
-        - task: NuGetAuthenticate@1
-          displayName: 'Authenticate NuGet'
+    - task: NuGetAuthenticate@1
+      displayName: 'Authenticate NuGet'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Restore NuGet packages'
-          inputs:
-            command: 'restore'
-            projects: '$(solution)'
-            feedsToUse: 'select'
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet packages'
+      inputs:
+        command: 'restore'
+        projects: '$(solution)'
+        feedsToUse: 'select'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Build WebApp.Domain'
-          inputs:
-            command: 'build'
-            projects: '**/WebApp.Domain/*.csproj'
-            arguments: '--configuration $(buildConfiguration) --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: 'Build WebApp.Domain'
+      inputs:
+        command: 'build'
+        projects: '**/WebApp.Domain/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Build WebApp.Application'
-          inputs:
-            command: 'build'
-            projects: '**/WebApp.Application/*.csproj'
-            arguments: '--configuration $(buildConfiguration) --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: 'Build WebApp.Application'
+      inputs:
+        command: 'build'
+        projects: '**/WebApp.Application/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Build WebApp.Infrastructure'
-          inputs:
-            command: 'build'
-            projects: '**/WebApp.Infrastructure/*.csproj'
-            arguments: '--configuration $(buildConfiguration) --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: 'Build WebApp.Infrastructure'
+      inputs:
+        command: 'build'
+        projects: '**/WebApp.Infrastructure/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Build WebApp.Web'
-          inputs:
-            command: 'build'
-            projects: '**/WebApp.Web/*.csproj'
-            arguments: '--configuration $(buildConfiguration) --no-restore'
+    - task: DotNetCoreCLI@2
+      displayName: 'Build WebApp.Web'
+      inputs:
+        command: 'build'
+        projects: '**/WebApp.Web/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Publish WebApp.Web'
-          inputs:
-            command: 'publish'
-            projects: '**/WebApp.Web/*.csproj'
-            arguments: >-
-              --configuration $(buildConfiguration)
-              --output $(Build.ArtifactStagingDirectory)
-              --no-build
-            zipAfterPublish: true
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish WebApp.Web'
+      inputs:
+        command: 'publish'
+        projects: '**/WebApp.Web/*.csproj'
+        arguments: >-
+          --configuration $(buildConfiguration)
+          --output $(Build.ArtifactStagingDirectory)
+          --no-build
+        zipAfterPublish: true
 
-        - task: PublishBuildArtifacts@1
-          displayName: 'Upload artifact'
-          inputs:
-            pathToPublish: '$(Build.ArtifactStagingDirectory)'
-            artifactName: '$(artifactName)'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload artifact'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'WebApplicationDDD'
 
-        - script: |
-            echo "Build completed successfully!"
-            echo "Artifact: $(artifactName)"
-          displayName: 'Build summary'
+    - task: Docker@2
+      displayName: 'Login to ACR'
+      inputs:
+        command: login
+        containerRegistry: '$(acrServiceConnection)'
+
+    - task: Docker@2
+      displayName: 'Build Docker Image'
+      inputs:
+        command: build
+        repository: '$(imageRepository)'
+        dockerfile: '$(dockerfilePath)'
+        containerRegistry: '$(acrServiceConnection)'
+        tags: |
+          $(imageTag)
+          latest
+
+    - task: Docker@2
+      displayName: 'Push Docker Image to ACR'
+      inputs:
+        command: push
+        repository: '$(imageRepository)'
+        containerRegistry: '$(acrServiceConnection)'
+        tags: |
+          $(imageTag)
+          latest
+
+    - task: PowerShell@2
+      name: exportTag
+      displayName: 'Export Image Tag to next stages'
+      inputs:
+        targetType: 'inline'
+        script: |
+          $tag = "$(Build.BuildId)"
+          Write-Host "##vso[task.setvariable variable=imageTag;isOutput=true]$tag"
+          Write-Host "Exported imageTag: $tag"
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# DEPLOYMENT PATH 1: REGULAR APP 
-# ══════════════════════════════════════════════════════════════════════════
-- stage: DeployRegularStaging
+# =========================
+# DEPLOY STAGING
+# Web App 1 — Zip Deploy
+# =========================
+- stage: DeployStaging_WebApp1
   displayName: 'Deploy Zip to WebApplicationDDD Staging'
   dependsOn: Build
-  condition: succeeded()
   jobs:
-    - job: DeployRegularStagingJob
+  - job: DeployZipJob
+    displayName: 'Deploy Zip to Staging Slot'
+    pool:
+      name: 'pool'
+    steps:
+
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download artifact'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'WebApplicationDDD'
+        downloadPath: '$(System.ArtifactsDirectory)'
+
+    - task: AzureWebApp@1
       displayName: 'Deploy Zip to Staging Slot'
-      steps:
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appName: '$(webAppName)'
+        slotName: 'staging'
+        package: '$(System.ArtifactsDirectory)/WebApplicationDDD/**/*.zip'
 
-        - task: DownloadBuildArtifacts@1
-          displayName: 'Download artifact'
-          inputs:
-            buildType: 'current'
-            downloadType: 'single'
-            artifactName: '$(artifactName)'
-            downloadPath: '$(System.ArtifactsDirectory)'
-
-        - task: AzureWebApp@1
-          displayName: 'Deploy Zip to Regular App Staging slot'
-          inputs:
-            azureSubscription: '$(azureServiceConnection)'
-            appType: 'webApp'
-            appName: '$(regularAppName)'
-            deployToSlotOrASE: true
-            resourceGroupName: '$(resourceGroup)'
-            slotName: 'staging'
-            package: '$(System.ArtifactsDirectory)/$(artifactName)/**/*.zip'
-            deploymentMethod: 'auto'
-            appSettings: '-ASPNETCORE_ENVIRONMENT Staging'
-            connectionStrings: '-Constr "$(connectionString)" SQLAzure'
-
-        - script: |
-            echo "✅ WebApplicationDDD deployed to Staging!"
-            echo "URL: https://$(regularAppName)-staging.azurewebsites.net"
-          displayName: 'Regular app staging summary'
-
-
-- stage: SwapRegularProduction
-  displayName: 'Swap WebApplicationDDD to Production'
-  dependsOn: DeployRegularStaging
-  condition: succeeded()
-  jobs:
-    - deployment: SwapRegularJob
-      displayName: 'Swap Regular App Staging to Production'
-      environment: 'production'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-
-              - task: AzureAppServiceSettings@1
-                displayName: 'Set Production App Settings'
-                inputs:
-                  azureSubscription: '$(azureServiceConnection)'
-                  appName: '$(regularAppName)'
-                  resourceGroupName: '$(resourceGroup)'
-                  continueOnError: true
-                  appSettings: |
-                    [
-                      {
-                        "name": "ASPNETCORE_ENVIRONMENT",
-                        "value": "Production",
-                        "slotSetting": true
-                      }
-                    ]
-                  connectionStrings: |
-                    [
-                      {
-                        "name": "Constr",
-                        "value": "$(connectionString)",
-                        "type": "SQLAzure",
-                        "slotSetting": true
-                      }
-                    ]
-
-              - task: AzureAppServiceManage@0
-                displayName: 'Swap Regular App Staging to Production'
-                inputs:
-                  azureSubscription: '$(azureServiceConnection)'
-                  action: 'Swap Slots'
-                  webAppName: '$(regularAppName)'
-                  resourceGroupName: '$(resourceGroup)'
-                  sourceSlot: 'staging'
-                  swapWithProduction: true
-
-              - script: |
-                  echo "✅ WebApplicationDDD swapped to Production!"
-                  echo "URL: https://$(regularAppName).azurewebsites.net"
-                displayName: 'Regular app production summary'
+    - task: AzureAppServiceSettings@1
+      displayName: 'Configure WebApp1 Staging Settings'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appName: '$(webAppName)'
+        resourceGroupName: '$(resourceGroup)'
+        slotName: 'staging'
+        continueOnError: true
+        appSettings: |
+          [
+            {
+              "name": "ASPNETCORE_ENVIRONMENT",
+              "value": "Staging",
+              "slotSetting": true
+            }
+          ]
+        connectionStrings: |
+          [
+            {
+              "name": "Constr",
+              "value": "$(connectionString)",
+              "type": "SQLAzure",
+              "slotSetting": true
+            }
+          ]
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# DEPLOYMENT PATH 2: DOCKER (Build & Push to ACR)
-# ══════════════════════════════════════════════════════════════════════════
-- stage: Docker
-  displayName: 'Build & Push Docker Image to ACR'
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-    - job: DockerBuild
-      displayName: 'Docker Build and Push'
-      steps:
-
-        - task: Docker@2
-          displayName: 'Build Docker Image'
-          inputs:
-            command: 'build'
-            repository: '$(imageRepository)'
-            dockerfile: '$(dockerfilePath)'
-            containerRegistry: '$(dockerRegistryServiceConnection)'
-            tags: |
-              $(tag)
-              latest
-
-        - task: Docker@2
-          displayName: 'Push Docker Image to ACR'
-          inputs:
-            command: 'push'
-            repository: '$(imageRepository)'
-            containerRegistry: '$(dockerRegistryServiceConnection)'
-            tags: |
-              $(tag)
-              latest
-
-        - script: |
-            echo "✅ Docker image pushed to ACR!"
-            echo "Image: $(containerRegistry)/$(imageRepository):$(tag)"
-          displayName: 'Docker build summary'
-
-
-# ══════════════════════════════════════════════════════════════════════════
-# DEPLOYMENT PATH 2: CONTAINER APP (Deploy to Staging)
-# ══════════════════════════════════════════════════════════════════════════
-- stage: DeployContainerStaging
+# =========================
+# DEPLOY STAGING
+# Web App 2 — Container Deploy
+# =========================
+- stage: DeployStaging_WebApp2
   displayName: 'Deploy Container to webappddd-app Staging'
-  dependsOn: Docker
-  condition: succeeded()
+  dependsOn: Build
+  variables:
+    imageTagFromBuild: $[ stageDependencies.Build.BuildJob.outputs['exportTag.imageTag'] ]
   jobs:
-    - job: DeployContainerStagingJob
+  - job: DeployContainerJob
+    displayName: 'Deploy Container to Staging Slot'
+    pool:
+      name: 'pool'
+    steps:
+
+    - task: PowerShell@2
+      displayName: 'Debug: Print full image reference'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Deploying image: $(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)"
+
+    - task: AzureWebAppContainer@1
       displayName: 'Deploy Container to Staging Slot'
-      steps:
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appName: '$(containerWebAppName)'
+        deployToSlotOrASE: true
+        resourceGroupName: '$(resourceGroup)'
+        slotName: 'staging'
+        containers: '$(acrLoginServer)/$(imageRepository):latest'
 
-        - task: AzureWebAppContainer@1
-          displayName: 'Deploy Container to Staging Slot'
-          inputs:
-            azureSubscription: '$(azureServiceConnection)'
-            appName: '$(containerAppName)'
-            deployToSlotOrASE: true
-            resourceGroupName: '$(resourceGroup)'
-            slotName: 'staging'
-            containers: '$(containerRegistry)/$(imageRepository):$(tag)'
-
-        - task: AzureAppServiceSettings@1
-          displayName: 'Configure Container Staging Settings'
-          inputs:
-            azureSubscription: '$(azureServiceConnection)'
-            appName: '$(containerAppName)'
-            resourceGroupName: '$(resourceGroup)'
-            slotName: 'staging'
-            continueOnError: true
-            appSettings: |
-              [
-                {
-                  "name": "ASPNETCORE_ENVIRONMENT",
-                  "value": "Staging",
-                  "slotSetting": true
-                },
-                {
-                  "name": "WEBSITES_PORT",
-                  "value": "8080",
-                  "slotSetting": false
-                }
-              ]
-            connectionStrings: |
-              [
-                {
-                  "name": "Constr",
-                  "value": "$(connectionString)",
-                  "type": "SQLAzure",
-                  "slotSetting": true
-                }
-              ]
-
-        - script: |
-            echo "✅ Container deployed to Staging!"
-            echo "Staging URL: https://$(containerAppName)-staging.azurewebsites.net"
-          displayName: 'Container staging summary'
+    - task: AzureAppServiceSettings@1
+      displayName: 'Configure WebApp2 Staging Settings'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appName: '$(containerWebAppName)'
+        resourceGroupName: '$(resourceGroup)'
+        slotName: 'staging'
+        continueOnError: true
+        appSettings: |
+          [
+            {
+              "name": "ASPNETCORE_ENVIRONMENT",
+              "value": "Staging",
+              "slotSetting": true
+            },
+            {
+              "name": "WEBSITES_PORT",
+              "value": "8080",
+              "slotSetting": false
+            }
+          ]
+        connectionStrings: |
+          [
+            {
+              "name": "Constr",
+              "value": "$(connectionString)",
+              "type": "SQLAzure",
+              "slotSetting": true
+            }
+          ]
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# DEPLOYMENT PATH 2: CONTAINER APP (Swap to Production)
-# ══════════════════════════════════════════════════════════════════════════
-- stage: SwapContainerProduction
-  displayName: 'Swap webappddd-app to Production'
-  dependsOn: DeployContainerStaging
-  condition: succeeded()
+# =========================
+# SWAP PRODUCTION
+# Web App 1 — Zip
+# =========================
+- stage: SwapProduction_WebApp1
+  displayName: 'Swap WebApplicationDDD to Production'
+  dependsOn: DeployStaging_WebApp1
   jobs:
-    - deployment: SwapContainerJob
-      displayName: 'Swap Container App Staging to Production'
-      environment: 'production'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
+  - deployment: SwapWebApp1
+    displayName: 'Swap WebApp1 Staging to Production'
+    environment: 'production'
+    pool:
+      name: 'pool'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
 
-              - task: AzureAppServiceSettings@1
-                displayName: 'Set Container Production Settings'
-                inputs:
-                  azureSubscription: '$(azureServiceConnection)'
-                  appName: '$(containerAppName)'
-                  resourceGroupName: '$(resourceGroup)'
-                  continueOnError: true
-                  appSettings: |
-                    [
-                      {
-                        "name": "ASPNETCORE_ENVIRONMENT",
-                        "value": "Production",
-                        "slotSetting": true
-                      },
-                      {
-                        "name": "WEBSITES_PORT",
-                        "value": "8080",
-                        "slotSetting": false
-                      }
-                    ]
-                  connectionStrings: |
-                    [
-                      {
-                        "name": "Constr",
-                        "value": "$(connectionString)",
-                        "type": "SQLAzure",
-                        "slotSetting": true
-                      }
-                    ]
+          - task: AzureAppServiceSettings@1
+            displayName: 'Configure WebApp1 Production Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(webAppName)'
+              resourceGroupName: '$(resourceGroup)'
+              continueOnError: true
+              appSettings: |
+                [
+                  {
+                    "name": "ASPNETCORE_ENVIRONMENT",
+                    "value": "Production",
+                    "slotSetting": true
+                  }
+                ]
+              connectionStrings: |
+                [
+                  {
+                    "name": "Constr",
+                    "value": "$(connectionString)",
+                    "type": "SQLAzure",
+                    "slotSetting": true
+                  }
+                ]
 
-              - task: AzureAppServiceManage@0
-                displayName: 'Swap Container App Staging to Production'
-                inputs:
-                  azureSubscription: '$(azureServiceConnection)'
-                  action: 'Swap Slots'
-                  webAppName: '$(containerAppName)'
-                  resourceGroupName: '$(resourceGroup)'
-                  sourceSlot: 'staging'
-                  swapWithProduction: true
+          - task: AzureAppServiceManage@0
+            displayName: 'Swap WebApp1 Staging to Production'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              WebAppName: '$(webAppName)'
+              ResourceGroupName: '$(resourceGroup)'
+              Action: 'Swap Slots'
+              SourceSlot: 'staging'
 
-              - script: |
-                  echo "✅ Container App swapped to Production!"
-                  echo "Production URL: https://$(containerAppName).azurewebsites.net"
-                displayName: 'Container production summary'
+
+# =========================
+# SWAP PRODUCTION
+# Web App 2 — Container
+# =========================
+- stage: SwapProduction_WebApp2
+  displayName: 'Swap webappddd-app to Production'
+  dependsOn: DeployStaging_WebApp2
+  jobs:
+  - deployment: SwapWebApp2
+    displayName: 'Swap WebApp2 Staging to Production'
+    environment: 'production'
+    pool:
+      name: 'pool'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: AzureAppServiceSettings@1
+            displayName: 'Configure WebApp2 Production Settings'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appName: '$(containerWebAppName)'
+              resourceGroupName: '$(resourceGroup)'
+              continueOnError: true
+              appSettings: |
+                [
+                  {
+                    "name": "ASPNETCORE_ENVIRONMENT",
+                    "value": "Production",
+                    "slotSetting": true
+                  },
+                  {
+                    "name": "WEBSITES_PORT",
+                    "value": "8080",
+                    "slotSetting": false
+                  }
+                ]
+              connectionStrings: |
+                [
+                  {
+                    "name": "Constr",
+                    "value": "$(connectionString)",
+                    "type": "SQLAzure",
+                    "slotSetting": true
+                  }
+                ]
+
+          - task: AzureAppServiceManage@0
+            displayName: 'Swap WebApp2 Staging to Production'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              WebAppName: '$(containerWebAppName)'
+              ResourceGroupName: '$(resourceGroup)'
+              Action: 'Swap Slots'
+              SourceSlot: 'staging'
