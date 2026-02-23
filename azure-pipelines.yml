@@ -219,7 +219,7 @@ stages:
         deployToSlotOrASE: true
         resourceGroupName: '$(resourceGroup)'
         slotName: 'staging'
-        containers: '$(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)'
+        containers: '$(acrLoginServer)/$(imageRepository):latest'
 
     - task: AzureAppServiceSettings@1
       displayName: 'Configure WebApp2 Staging Settings'
