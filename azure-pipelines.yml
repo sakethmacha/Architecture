@@ -7,24 +7,33 @@ pool:
   name: 'pool'
 
 variables:
-  buildConfiguration: 'Release'
-  solution: '**/*.sln'
-  keyVaultName: 'keyvault1232123'
-  azureSubscription: 'Azure Connect'
-  resourceGroup: 'sakethresoursegroup'
-
-  connectionString: '@Microsoft.KeyVault(SecretUri=https://keyvault1232123.vault.azure.net/secrets/Constr/)'
-
-  webAppName: 'WebApplicationDDD'
-
-  # ✅ UPDATED: was 'sakethwebapp', now 'webappddd-app'
-  containerWebAppName: 'webappddd-app'
-  acrLoginServer: 'sakethacr.azurecr.io'
-  imageRepository: 'webappddd'
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
-  imageTag: '$(Build.BuildId)'
-  # ✅ UPDATED: make sure this matches your service connection name in DevOps
-  acrServiceConnection: 'sakethacr-connection'
+  - group: acr-credentials
+  - name: buildConfiguration
+    value: 'Release'
+  - name: solution
+    value: '**/*.sln'
+  - name: keyVaultName
+    value: 'keyvault1232123'
+  - name: azureSubscription
+    value: 'Azure Connect'
+  - name: resourceGroup
+    value: 'sakethresoursegroup'
+  - name: connectionString
+    value: '@Microsoft.KeyVault(SecretUri=https://keyvault1232123.vault.azure.net/secrets/Constr/)'
+  - name: webAppName
+    value: 'WebApplicationDDD'
+  - name: containerWebAppName
+    value: 'webappddd-app'
+  - name: acrLoginServer
+    value: 'sakethacr.azurecr.io'
+  - name: imageRepository
+    value: 'webappddd'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/Dockerfile'
+  - name: imageTag
+    value: '$(Build.BuildId)'
+  - name: acrServiceConnection
+    value: 'sakethacr-connection'
 
 stages:
 
@@ -211,26 +220,30 @@ stages:
         script: |
           Write-Host "Deploying image: $(acrLoginServer)/$(imageRepository):$(imageTagFromBuild)"
 
-    - task: AzureWebAppContainer@1
-      displayName: 'Deploy Container to Staging Slot'
-      inputs:
-        azureSubscription: '$(azureSubscription)'
-        appName: '$(containerWebAppName)'
-        deployToSlotOrASE: true
-        resourceGroupName: '$(resourceGroup)'
-        slotName: 'staging'
-        containers: '$(acrLoginServer)/$(imageRepository):latest'
-
     - task: AzureAppServiceSettings@1
-      displayName: 'Configure WebApp2 Staging Settings'
+      displayName: 'Inject ACR credentials into staging slot'
       inputs:
         azureSubscription: '$(azureSubscription)'
         appName: '$(containerWebAppName)'
         resourceGroupName: '$(resourceGroup)'
         slotName: 'staging'
-        continueOnError: true
         appSettings: |
           [
+            {
+              "name": "DOCKER_REGISTRY_SERVER_URL",
+              "value": "https://sakethacr.azurecr.io",
+              "slotSetting": false
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+              "value": "sakethacr",
+              "slotSetting": false
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+              "value": "$(ACR_PASSWORD)",
+              "slotSetting": false
+            },
             {
               "name": "ASPNETCORE_ENVIRONMENT",
               "value": "Staging",
@@ -251,6 +264,16 @@ stages:
               "slotSetting": true
             }
           ]
+
+    - task: AzureWebAppContainer@1
+      displayName: 'Deploy Container to Staging Slot'
+      inputs:
+        azureSubscription: '$(azureSubscription)'
+        appName: '$(containerWebAppName)'
+        deployToSlotOrASE: true
+        resourceGroupName: '$(resourceGroup)'
+        slotName: 'staging'
+        containers: '$(acrLoginServer)/$(imageRepository):latest'
 
 
 # =========================
@@ -337,6 +360,21 @@ stages:
                     "name": "ASPNETCORE_ENVIRONMENT",
                     "value": "Production",
                     "slotSetting": true
+                  },
+                  {
+                    "name": "DOCKER_REGISTRY_SERVER_URL",
+                    "value": "https://sakethacr.azurecr.io",
+                    "slotSetting": false
+                  },
+                  {
+                    "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+                    "value": "sakethacr",
+                    "slotSetting": false
+                  },
+                  {
+                    "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+                    "value": "$(ACR_PASSWORD)",
+                    "slotSetting": false
                   },
                   {
                     "name": "WEBSITES_PORT",
