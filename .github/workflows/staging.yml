@@ -4,11 +4,11 @@ name: Deploy to Staging
 on:
   push:
     branches:
-      - develop        #  Your staging branch
+      - develop
 
 env:
   DOTNET_VERSION: '9.0.x'
-  AZURE_WEBAPP_NAME: 'myapp-staging'             # Change to your staging App Service name
+  AZURE_WEBAPP_NAME: 'myapp-staging'
   PROJECT_PATH: './WebApp.Web/WebApp.Web.csproj'
 
 jobs:
@@ -45,3 +45,10 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_STAGING }}
           package: ./publish
+
+      # Step 7 - Force restart to load new DLL
+      - name: Restart Azure App Service
+        uses: azure/CLI@v1
+        with:
+          inlineScript: |
+            az webapp restart --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }}
