@@ -1,0 +1,47 @@
+name: Deploy to Production
+
+# Triggers when you push code to the toget branch
+on:
+  push:
+    branches:
+      - toget          #  Your production branch
+
+env:
+  DOTNET_VERSION: '9.0.x'
+  AZURE_WEBAPP_NAME: 'myapp-production'          # Change to your production App Service name
+  PROJECT_PATH: './WebApp.Web/WebApp.Web.csproj'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1 - Get the code from your repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2 - Install .NET 9 on the runner machine
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Step 3 - Restore all 4 projects in the solution together
+      - name: Restore Dependencies
+        run: dotnet restore WebApplicationDDD.sln
+
+      # Step 4 - Build the entire solution
+      - name: Build Solution
+        run: dotnet build WebApplicationDDD.sln --configuration Release --no-restore
+
+      # Step 5 - Publish only the Web project
+      - name: Publish Web Project
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-build --output ./publish
+
+      # Step 6 - Deploy to Azure Production App Service
+      - name: Deploy to Azure Production
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRODUCTION }}
+          package: ./publish
