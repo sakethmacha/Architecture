@@ -1,10 +1,9 @@
-name: Deploy to Staging
+name: Deploy to Production
 
-# Triggers when you push code to the develop branch
 on:
   push:
     branches:
-      - develop
+      - develop   # your production branch
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -16,35 +15,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1 - Get the code from your repository
+      # Step 1 - Checkout code
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2 - Install .NET 9 on the runner machine
+      # Step 2 - Setup .NET
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # Step 3 - Restore all 4 projects in the solution together
+      # Step 3 - Clean previous builds (IMPORTANT)
+      - name: Clean Solution
+        run: dotnet clean
+
+      # Step 4 - Restore dependencies
       - name: Restore Dependencies
         run: dotnet restore WebApplicationDDD.sln
 
-      # Step 4 - Build the entire solution
-      - name: Build Solution
-        run: dotnet build WebApplicationDDD.sln --configuration Release --no-restore
-
-      # Step 5 - Publish only the Web project
+      # Step 5 - Publish (build + publish fresh)
       - name: Publish Web Project
-        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-restore --output ./publish
-      - name: Debug App Name
-        run: echo "Deploying to ${{ env.AZURE_WEBAPP_NAME }}"
-      # Step 6 - Deploy to Azure Staging App Service
-      - name: Deploy to Azure Staging
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --output ./publish
+
+      # Step 6 - Verify published files (DEBUG - optional)
+      - name: Check Published Files
+        run: ls -R ./publish
+
+      # Step 7 - Deploy to Azure (FORCE CLEAN)
+      - name: Deploy to Azure Production
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_STAGING }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRODUCTION }}
           package: ./publish
           clean: true
-     
