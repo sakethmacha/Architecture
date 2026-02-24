@@ -59,7 +59,6 @@ namespace WebApp.Web
                                   .Enrich.FromLogContext()
                                   .CreateLogger();
 
-
             builder.Host.UseSerilog();
             builder.Services.AddHealthChecks()
                 .AddSqlServer(
