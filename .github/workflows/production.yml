@@ -36,7 +36,7 @@ jobs:
 
       # Step 5 - Publish only the Web project
       - name: Publish Web Project
-        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --output ./publish
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-restore --output ./publish
 
       # Step 6 - Deploy to Azure Production App Service
       - name: Deploy to Azure Production
