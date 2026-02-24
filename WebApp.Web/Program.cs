@@ -79,7 +79,7 @@ namespace WebApp.Web
                 app.UseHsts();
             }
             app.UseMiddleware<GlobalExceptionMiddleware>();
-
+            app.MapGet("/version", () => "Version DEV 9999");
             app.UseHttpsRedirection();
             app.UseRouting();
             app.MapHealthChecks("/health/live", new()
