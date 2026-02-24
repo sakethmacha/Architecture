@@ -37,7 +37,8 @@ jobs:
       # Step 5 - Publish only the Web project
       - name: Publish Web Project
         run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-restore --output ./publish
-
+      - name: Debug App Name
+        run: echo "Deploying to ${{ env.AZURE_WEBAPP_NAME }}"
       # Step 6 - Deploy to Azure Staging App Service
       - name: Deploy to Azure Staging
         uses: azure/webapps-deploy@v3
