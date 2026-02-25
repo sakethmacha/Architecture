@@ -3,7 +3,7 @@ name: Deploy to Staging
 on:
   push:
     branches:
-      - develop   # your production branch
+      - develop
 
 env:
   DOTNET_VERSION: '9.0.x'
@@ -25,24 +25,28 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      # Step 3 - Clean previous builds (IMPORTANT)
+      # Step 3 - Clean previous builds
       - name: Clean Solution
-        run: dotnet clean
+        run: dotnet clean WebApplicationDDD.sln   # ✅ Added solution name
 
       # Step 4 - Restore dependencies
       - name: Restore Dependencies
         run: dotnet restore WebApplicationDDD.sln
 
-      # Step 5 - Publish (build + publish fresh)
-      - name: Publish Web Project
-        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --output ./publish
+      # Step 5 - Build solution        ✅ Added missing build step
+      - name: Build Solution
+        run: dotnet build WebApplicationDDD.sln --configuration Release --no-restore
 
-      # Step 6 - Verify published files (DEBUG - optional)
+      # Step 6 - Publish Web project
+      - name: Publish Web Project
+        run: dotnet publish ${{ env.PROJECT_PATH }} --configuration Release --no-restore --output ./publish
+
+      # Step 7 - Verify published files
       - name: Check Published Files
         run: ls -R ./publish
 
-      # Step 7 - Deploy to Azure (FORCE CLEAN)
-      - name: Deploy to Azure Production
+      # Step 8 - Deploy to Azure Staging
+      - name: Deploy to Azure Staging
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
